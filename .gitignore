@@ -1,0 +1,3 @@
+
+# DNSSEC private keys — keep local, never commit
+**/*.private

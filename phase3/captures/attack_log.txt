@@ -1,0 +1,89 @@
+=== PHASE 3: DNSSEC CHAIN OF TRUST — EVIDENCE & LOGS ===
+
+--- 1. VERIFICATION WITH NO INTERCEPTOR (Section 3.2) ---
+Command:
+  client$ dig +dnssec @172.16.2.10 example.com
+
+Output:
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 31
+  ;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags: do; udp: 1232
+  ;; QUESTION SECTION:
+  ;example.com.			IN	A
+  ;; ANSWER SECTION:
+  example.com.		86400	IN	A	172.16.1.20
+  example.com.		86400	IN	RRSIG	A 13 2 86400 20261121102317 20261022102317 59537 example.com. +MLcOYBQDwsSBkW0OdwlCANC2nu+0sJe81aOc4n/08V8ZHO1rDEudFzq fX5LjKKnm6qWC0f/GnhpqFyR2zdj1w==
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Notice: The 'ad' (authenticated data) flag is present in the header, and valid RRSIG is returned.
+
+Command:
+  client$ delv -a /etc/bind/root.key @172.16.2.10 example.com
+
+Output:
+  ; fully validated
+  example.com.		86382	IN	A	172.16.1.20
+  example.com.		86382	IN	RRSIG	A 13 2 86400 20261121102317 20261022102317 59537 example.com. +MLcOYBQDwsSBkW0OdwlCANC2nu+0sJe81aOc4n/08V8ZHO1rDEudFzq fX5LjKKnm6qWC0f/GnhpqFyR2zdj1w==
+
+Notice: Output explicitly confirms "; fully validated".
+
+--- 2. RE-RUN ATTACK WITH FORGING ENABLED (Section 3.3) ---
+Action:
+  - Interceptor started in FORGING mode (FORGE=1)
+  - Core-router diversion route active
+  - Resolver cache flushed (rndc flush)
+
+Command:
+  client$ dig @172.16.2.10 example.com
+
+Output:
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: 58334
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+  ;; QUESTION SECTION:
+  ;example.com.			IN	A
+  ;; Query time: 9 msec
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ curl -v http://example.com
+
+Output:
+  * Could not resolve host: example.com
+  * Closing connection
+  curl: (6) Could not resolve host: example.com
+
+Resolver Logs:
+  validating example.com/A: no valid signature found
+  RRSIG failed to verify resolving 'example.com/A/IN': 172.16.3.30#53
+
+Interceptor Logs:
+  [FORGED] (TXID 0x1cb5) example.com A: 172.16.1.20 -> 172.16.1.30
+
+Outcome: The resolver validated the response against the DNSKEY / RRSIG chain, detected cryptographic mismatch, dropped the forged record, and returned SERVFAIL. The client could not resolve the host, preventing the HTTP hijack.
+
+--- 3. UNAFFECTED NON-TARGET LOOKUP (Section 3.3) ---
+Command:
+  client$ dig +dnssec @172.16.2.10 www.example.com
+  client$ curl -s http://www.example.com
+
+Output:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 14272
+  ;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+  ;; ANSWER SECTION:
+  www.example.com.	86400	IN	A	172.16.1.20
+  www.example.com.	86400	IN	RRSIG	A 13 3 86400 20261121102317 20261022102317 59537 example.com. xDFpUcgcZzxX0W9ETXlHCEvsQCXLEWxF+7PI0dVk0XwpXVuu9PmSG5Qb K3l5qVIK5VcHIGvM4PUBUjnCYRKr/w==
+
+  <!DOCTYPE html>
+  <html>
+  <head>
+      <title>Legitimate example.com</title>
+  </head>
+  <body>
+      <h1>Legitimate example.com</h1>
+      <p>Served by the real webserver at 172.16.1.20.</p>
+      <p>CS6008 Network Security - DNS Security Assignment, Phase 1.</p>
+  </body>
+  </html>
