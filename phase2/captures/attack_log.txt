@@ -1,0 +1,78 @@
+=== PHASE 2 ATTACK & VERIFICATION EVIDENCE ===
+
+--- 1. TRANSPARENT RELAY (Section 2.2) ---
+Command:
+  client$ dig @172.16.2.10 example.com
+Output:
+  ;; ANSWER SECTION:
+  example.com.        86400   IN  A   172.16.1.20
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ curl -s http://example.com
+Output:
+  <!DOCTYPE html>
+  <html>
+  <head>
+      <title>Legitimate example.com</title>
+  </head>
+  <body>
+      <h1>Legitimate example.com</h1>
+      <p>Served by the real webserver at 172.16.1.20.</p>
+      <p>CS6008 Network Security - DNS Security Assignment, Phase 1.</p>
+  </body>
+  </html>
+
+Interceptor Log:
+  [RELAY] (TXID 0x4356) DNS response forwarded unchanged
+
+--- 2. RESPONSE FORGERY ATTACK (Section 2.3) ---
+Command:
+  attacker$ /app/interceptor (FORGE=1)
+  resolver$ rndc flush
+  client$ dig @172.16.2.10 example.com
+Output:
+  ;; ANSWER SECTION:
+  example.com.        86400   IN  A   172.16.1.30
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ curl -s http://example.com
+Output:
+  <!DOCTYPE html>
+  <html>
+  <head><title>Rogue Website</title></head>
+  <body>
+    <h1>Rogue Website</h1>
+    <p>Phase 2 DNS response forgery succeeded.</p>
+  </body>
+  </html>
+
+Interceptor Log:
+  [FORGED] (TXID 0x51ce) example.com A: 172.16.1.20 -> 172.16.1.30
+
+--- 3. NON-TARGET LOOKUP REMAINS UNAFFECTED (Section 2.3) ---
+Command:
+  client$ dig @172.16.2.10 www.example.com
+Output:
+  ;; ANSWER SECTION:
+  www.example.com.    86400   IN  A   172.16.1.20
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ curl -s http://www.example.com
+Output:
+  <!DOCTYPE html>
+  <html>
+  <head>
+      <title>Legitimate example.com</title>
+  </head>
+  <body>
+      <h1>Legitimate example.com</h1>
+      <p>Served by the real webserver at 172.16.1.20.</p>
+      <p>CS6008 Network Security - DNS Security Assignment, Phase 1.</p>
+  </body>
+  </html>
+
+Interceptor Log:
+  [RELAY] (TXID 0xca41) DNS response forwarded unchanged
