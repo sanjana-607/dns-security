@@ -1,0 +1,13 @@
+$TTL 86400
+@   IN  SOA ns.root. hostmaster.root. (
+        2026102101
+        3600
+        1800
+        604800
+        86400
+)
+    IN  NS  ns.root.
+ns.root.    IN  A   172.16.3.10
+
+com.        IN  NS  ns.com.
+ns.com.     IN  A   172.16.3.20
