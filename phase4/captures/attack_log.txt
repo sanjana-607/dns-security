@@ -1,0 +1,176 @@
+=== PHASE 4: SIGNATURE STRIPPING & DOWNGRADE — EVIDENCE & LOGS ===
+
+================================================================================
+PART 1: BASELINE VERIFICATION (Section 4.2)
+================================================================================
+Description:
+  Full DNSSEC chain of trust active (Root -> com -> example.com).
+  Diversion route inactive; interceptor stopped.
+
+Command:
+  client$ dig +dnssec @172.16.2.10 example.com
+
+Output:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 40132
+  ;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags: do; udp: 1232
+  ;; QUESTION SECTION:
+  ;example.com.			IN	A
+  ;; ANSWER SECTION:
+  example.com.		86400	IN	A	172.16.1.20
+  example.com.		86400	IN	RRSIG	A 13 2 86400 20261121145859 20261022145859 49949 example.com. OK4ta3Tj5grIEZKgPXvd5rsCxQLfkjn8N99I6jrVn30Rtn0cjsHilebi Z6MmsgRlG3l9KPq9MHwQK8wa5iTa6A==
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ delv -a /etc/bind/root.key @172.16.2.10 example.com
+
+Output:
+  ; fully validated
+  example.com.		86400	IN	A	172.16.1.20
+  example.com.		86400	IN	RRSIG	A 13 2 86400 20261121145859 20261022145859 49949 example.com. OK4ta3Tj5grIEZKgPXvd5rsCxQLfkjn8N99I6jrVn30Rtn0cjsHilebi Z6MmsgRlG3l9KPq9MHwQK8wa5iTa6A==
+
+Notice:
+  - 'ad' flag present in dig header.
+  - delv explicitly confirms '; fully validated'.
+
+================================================================================
+PART 2: RUN A — SIGNATURE & DS STRIPPING ON SECURE DELEGATION (Section 4.3)
+================================================================================
+Setup:
+  - Parent 'com' publishes DS record for 'example.com' in db.com.signed (secure delegation).
+  - Interceptor started in STRIP & FORGE mode (STRIP=1).
+  - Diversion route active on core-router: 172.16.2.10 via 172.16.2.100.
+  - Resolver cache flushed (rndc flush).
+
+Interceptor Action on Wire:
+  - Strips RRSIG and DNSKEY records from authoritative response.
+  - Forges A record RDATA to 172.16.1.30 (rogue-web).
+  - Clears AD flag in DNS header.
+
+Command:
+  client$ dig @172.16.2.10 example.com
+
+Output:
+  ;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: 45752
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 1232
+  ;; QUESTION SECTION:
+  ;example.com.			IN	A
+  ;; Query time: 9 msec
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ curl -v http://example.com
+
+Output:
+  * Could not resolve host: example.com
+  * Closing connection
+  curl: (6) Could not resolve host: example.com
+
+Resolver Logs:
+  validating example.com/DNSKEY: starting
+  validating example.com/DNSKEY: verify rdataset (keyid=7191): success
+  validating example.com/DNSKEY: marking as secure (validate_dnskey (DS))
+  validating example.com/A: no valid signature found
+  RRSIG failed to verify resolving 'example.com/A/IN': 172.16.3.30#53
+
+Interceptor Logs:
+  Interface: eth0
+  Attacker MAC: d2:b9:9e:21:8e:68
+  Resolver MAC: 7e:89:a3:ef:6a:7c
+  Mode: SIGNATURE STRIPPING MODE (STRIP=1)
+  Listening for DNS responses destined for 172.16.2.10...
+  [RELAY] (TXID 0x5420) DNS response forwarded unchanged
+  [STRIP & FORGE] (TXID 0xb05e) example.com: stripped RRSIG/DNSKEY, forged A -> 172.16.1.30
+
+Outcome:
+  The resolver holds an unbroken chain of trust down to example.com via com's signed DS record.
+  When the stripped/forged response arrives without valid RRSIG, the resolver rejects it as BOGUS
+  and returns SERVFAIL to the client. Downgrade attack is thwarted.
+
+================================================================================
+PART 3: RUN B — OPERATOR MISCONFIGURATION (NO DS IN PARENT) (Section 4.3)
+================================================================================
+Setup:
+  - Operator signed example.com on domain-ns (KSK/ZSK present, zone signed).
+  - Operator FAILED to publish DS record in parent 'com' zone (insecure delegation).
+  - Resolver holds Root KSK trust anchor.
+  - Interceptor started in STRIP & FORGE mode (STRIP=1).
+  - Diversion route active on core-router.
+  - Resolver cache flushed (rndc flush).
+
+Baseline Check (without interceptor):
+  client$ dig @172.16.2.10 example.com
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 54583
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+  example.com.		86400	IN	A	172.16.1.20
+  (Notice: 'ad' flag is ABSENT because zone is treated as insecure/unsigned).
+
+Attack Execution (Interceptor active):
+Command:
+  client$ dig @172.16.2.10 example.com
+
+Output:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 18239
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 1232
+  ;; QUESTION SECTION:
+  ;example.com.			IN	A
+  ;; ANSWER SECTION:
+  example.com.		86400	IN	A	172.16.1.30
+  ;; Query time: 6 msec
+  ;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+
+Command:
+  client$ curl -s http://example.com
+
+Output:
+  <!DOCTYPE html>
+  <html>
+  <head><title>Rogue Website</title></head>
+  <body>
+    <h1>Rogue Website</h1>
+    <p>Phase 2 DNS response forgery succeeded.</p>
+  </body>
+  </html>
+
+Interceptor Logs:
+  Interface: eth0
+  Attacker MAC: d2:b9:9e:21:8e:68
+  Resolver MAC: 7e:89:a3:ef:6a:7c
+  Mode: SIGNATURE STRIPPING MODE (STRIP=1)
+  Listening for DNS responses destined for 172.16.2.10...
+  [RELAY] (TXID 0xaccd) DNS response forwarded unchanged
+  [STRIP & FORGE] (TXID 0x3da5) example.com: stripped RRSIG/DNSKEY, forged A -> 172.16.1.30
+
+Unaffected Non-Target Query:
+Command:
+  client$ dig @172.16.2.10 www.example.com
+  client$ curl -s http://www.example.com
+
+Output:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 57807
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+  ;; ANSWER SECTION:
+  www.example.com.	86400	IN	A	172.16.1.20
+
+  <!DOCTYPE html>
+  <html>
+  <head>
+      <title>Legitimate example.com</title>
+  </head>
+  <body>
+      <h1>Legitimate example.com</h1>
+      <p>Served by the real webserver at 172.16.1.20.</p>
+      <p>CS6008 Network Security - DNS Security Assignment, Phase 1.</p>
+  </body>
+  </html>
+
+Outcome:
+  Because the parent 'com' zone publishes no DS record for example.com, com's authenticated NSEC
+  proves to the validating resolver that the delegation is INSECURE. The resolver therefore disables
+  DNSSEC validation for example.com, strips requirements for RRSIG, and accepts the attacker's
+  stripped and forged A record (172.16.1.30). The client is successfully hijacked to rogue-web!

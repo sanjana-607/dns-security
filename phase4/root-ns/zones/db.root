@@ -1,0 +1,24 @@
+$TTL 86400
+@   IN  SOA ns.root. hostmaster.root. (
+        2026102101
+        3600
+        1800
+        604800
+        86400
+)
+    IN  NS  ns.root.
+ns.root.    IN  A   172.16.3.10
+
+com.        IN  NS  ns.com.
+ns.com.     IN  A   172.16.3.20
+com.			IN DS 27244 13 2 3198B9240ACE4AE4637192F7E3BE27FA2D8C396CA618ED271ADFF209 A19BD12D
+; This is a zone-signing key, keyid 17445, for .
+; Created: 20261022205611 (Thu Oct 22 20:56:11 2026)
+; Publish: 20261022205611 (Thu Oct 22 20:56:11 2026)
+; Activate: 20261022205611 (Thu Oct 22 20:56:11 2026)
+. IN DNSKEY 256 3 13 Eap82fq5sT0tUtH7jCIyHqhG2wOHFJZj1EQ6LoaU9e3OctmQuffxOMZY SXjU1RQuwFT+hqRphY8FaHg6bb78Fg==
+; This is a key-signing key, keyid 63058, for .
+; Created: 20261022205611 (Thu Oct 22 20:56:11 2026)
+; Publish: 20261022205611 (Thu Oct 22 20:56:11 2026)
+; Activate: 20261022205611 (Thu Oct 22 20:56:11 2026)
+. IN DNSKEY 257 3 13 VbrTp4n/Lx9NEMT9vqSE0VteybjBIq4JdQVxGmx0ACoJTi6Em6n8LLIS R29edMY93TxOpHy+EAmDRmfPvguDlg==
