@@ -1,0 +1,22 @@
+=== PHASE 5: DNSSEC ZONE WALKING - COMMAND LOG ===
+
+This file records the commands used for the Phase 5 demonstration. Run the
+commands from dns_security/phase5 after starting the Compose services.
+
+--- Standard NSEC (walkable zone) ---
+./scripts/sign-walkable-zone.sh
+docker compose restart root-ns tld-ns domain-ns resolver
+./scripts/run-zonewalker.sh
+
+Expected result:
+  Result: SUCCESS (Zone Walk Complete via NSEC)
+  The hidden names in db.example.com.walkable are listed.
+
+--- NSEC3 (walking prevented) ---
+./scripts/sign-fixed-zone.sh
+docker compose restart root-ns tld-ns domain-ns resolver
+./scripts/run-zonewalker.sh
+
+Expected result:
+  Result: FAILURE (Zone Protected by NSEC3)
+  Names Leaked: 0 (Protected against cleartext walking)
