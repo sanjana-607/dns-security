@@ -1,0 +1,156 @@
+services:
+  # Routers
+  edge-router:
+    build:
+      context: .
+      dockerfile: routers/Dockerfile
+    container_name: edge-router
+    command: ["sleep", "infinity"]
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    networks:
+      client-net:
+        ipv4_address: 172.16.1.2
+      resolver-net:
+        ipv4_address: 172.16.2.2
+
+  core-router:
+    build:
+      context: .
+      dockerfile: routers/Dockerfile
+    container_name: core-router
+    command: ["sleep", "infinity"]
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    networks:
+      resolver-net:
+        ipv4_address: 172.16.2.3
+      authoritative-net:
+        ipv4_address: 172.16.3.3
+
+  # Client
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: client
+    sysctls:
+      net.ipv4.ip_forward: "0"
+    command: ["sleep", "infinity"]
+    cap_add: [NET_ADMIN]
+    dns:
+      - 172.16.2.10
+    volumes:
+      - ./client/root.key:/etc/bind/root.key:ro
+    networks:
+      client-net:
+        ipv4_address: 172.16.1.10
+
+  # Webserver
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    networks:
+      client-net:
+        ipv4_address: 172.16.1.20
+    volumes:
+      - ./webserver/html:/usr/share/nginx/html:ro
+
+  # Recursive resolver
+  resolver:
+    image: internetsystemsconsortium/bind9:9.20
+    container_name: resolver
+    command: ["-g"]
+    cap_add: [NET_ADMIN]
+    networks:
+      resolver-net:
+        ipv4_address: 172.16.2.10
+    volumes:
+      - ./resolver/named.conf:/etc/bind/named.conf:ro
+      - ./resolver/zones:/etc/bind/zones:ro
+      - ./resolver/rndc.conf:/etc/bind/rndc.conf:ro
+      - ./resolver/trust-anchors.conf:/etc/bind/trust-anchors.conf:ro
+
+  # Root authoritative DNS
+  root-ns:
+    image: internetsystemsconsortium/bind9:9.20
+    container_name: root-ns
+    command: ["-g"]
+    cap_add: [NET_ADMIN]
+    networks:
+      authoritative-net:
+        ipv4_address: 172.16.3.10
+    volumes:
+      - ./root-ns/named.conf:/etc/bind/named.conf:ro
+      - ./root-ns/zones:/etc/bind/zones:ro
+
+  # .com authoritative DNS
+  tld-ns:
+    image: internetsystemsconsortium/bind9:9.20
+    container_name: tld-ns
+    command: ["-g"]
+    cap_add: [NET_ADMIN]
+    networks:
+      authoritative-net:
+        ipv4_address: 172.16.3.20
+    volumes:
+      - ./tld-ns/named.conf:/etc/bind/named.conf:ro
+      - ./tld-ns/zones:/etc/bind/zones:ro
+
+  # example.com authoritative DNS
+  domain-ns:
+    image: internetsystemsconsortium/bind9:9.20
+    container_name: domain-ns
+    command: ["-g"]
+    cap_add: [NET_ADMIN]
+    networks:
+      authoritative-net:
+        ipv4_address: 172.16.3.30
+    volumes:
+      - ./domain-ns/named.conf:/etc/bind/named.conf:ro
+      - ./domain-ns/zones:/etc/bind/zones:ro
+
+  rogue-web:
+    container_name: rogue-web
+    image: nginx:alpine
+    networks:
+      client-net:
+        ipv4_address: 172.16.1.30
+    volumes:
+      - ./rogue-web/html:/usr/share/nginx/html:ro
+
+  attacker:
+    container_name: attacker
+    build:
+      context: ./attacker
+      dockerfile: Dockerfile
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    sysctls:
+      net.ipv4.ip_forward: "0"
+    command: ["sleep", "infinity"]
+    networks:
+      client-net:
+        ipv4_address: 172.16.1.100
+
+networks:
+  client-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.1.0/24
+
+  resolver-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.2.0/24
+
+  authoritative-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.3.0/24

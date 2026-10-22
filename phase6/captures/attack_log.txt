@@ -1,0 +1,27 @@
+=== PHASE 6: LAST-MILE RESPONSE FORGERY - COMMAND LOG ===
+
+--- Transparent relay ---
+./scripts/run-interceptor-relay.sh
+docker compose exec -T client dig @172.16.2.10 example.com
+docker compose exec -T client curl -s http://example.com
+docker compose exec -T client delv -a /etc/bind/root.key @172.16.2.10 example.com
+
+Expected: legitimate address 172.16.1.20, legitimate page, and fully
+validated DNSSEC output.
+
+--- Last-mile forgery ---
+./scripts/run-interceptor-forge.sh
+docker compose exec -T client dig @172.16.2.10 example.com
+docker compose exec -T client curl -s http://example.com
+docker compose exec -T client delv -a /etc/bind/root.key @172.16.2.10 example.com
+
+Expected: ordinary curl reaches 172.16.1.30 and displays the rogue page.
+The locally validating delv command rejects the modified A record.
+
+Observed during validation:
+  relay dig: 172.16.1.20
+  relay curl: Legitimate example.com
+  relay delv: fully validated
+  forged dig: 172.16.1.30
+  forged curl: Rogue Website
+  forged delv: RRSIG failed to verify

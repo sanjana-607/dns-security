@@ -1,0 +1,44 @@
+$TTL 86400
+@   IN  SOA ns.com. hostmaster.com. (
+        2026102101
+        3600
+        1800
+        604800
+        86400
+)
+    IN  NS  ns.com.
+ns.com. IN  A   172.16.3.20
+
+example.com.       IN  NS  ns.example.com.
+ns.example.com.    IN  A   172.16.3.30
+example.com.		IN DS 2522 13 2 8B505D18BEFEF288B5F27B24A284E4D3EC582DC727CEDC4A491048A5 7E86B15D
+example.com.		IN DS 39567 13 2 FAF8FA01A41079865421D391E7DA360F9710B3C8305ECBF9A8ED8337 D8E0DB5E
+; This is a zone-signing key, keyid 39124, for com.
+; Created: 20261022163813 (Thu Oct 22 16:38:13 2026)
+; Publish: 20261022163813 (Thu Oct 22 16:38:13 2026)
+; Activate: 20261022163813 (Thu Oct 22 16:38:13 2026)
+; This is a key-signing key, keyid 57040, for com.
+; Created: 20261022163813 (Thu Oct 22 16:38:13 2026)
+; Publish: 20261022163813 (Thu Oct 22 16:38:13 2026)
+; Activate: 20261022163813 (Thu Oct 22 16:38:13 2026)
+example.com.		IN DS 39567 13 2 FAF8FA01A41079865421D391E7DA360F9710B3C8305ECBF9A8ED8337 D8E0DB5E
+example.com.		IN DS 42561 13 2 BB59EFC399945EBF895D649B30897E31DDF56F4BA5EB91FF4A93918D CC98C24C
+; This is a zone-signing key, keyid 49043, for com.
+; Created: 20261022163848 (Thu Oct 22 16:38:48 2026)
+; Publish: 20261022163848 (Thu Oct 22 16:38:48 2026)
+; Activate: 20261022163848 (Thu Oct 22 16:38:48 2026)
+; This is a key-signing key, keyid 53004, for com.
+; Created: 20261022163848 (Thu Oct 22 16:38:48 2026)
+; Publish: 20261022163848 (Thu Oct 22 16:38:48 2026)
+; Activate: 20261022163848 (Thu Oct 22 16:38:48 2026)
+example.com.		IN DS 26424 13 2 6D9423190325F18558FEB2CDD2DD277EB04257C49E1B381A11F281BB 09FEB5CC
+; This is a zone-signing key, keyid 6594, for com.
+; Created: 20261022215009 (Thu Oct 22 21:50:09 2026)
+; Publish: 20261022215009 (Thu Oct 22 21:50:09 2026)
+; Activate: 20261022215009 (Thu Oct 22 21:50:09 2026)
+com. IN DNSKEY 256 3 13 ed3EqhBCLlmYOacc1mE3WYxRoPAMslWwtslN3s55LUx1jqj+RweyM/is MbuainRjHf1yoVX1eFuXO5UwEmTMjw==
+; This is a key-signing key, keyid 52953, for com.
+; Created: 20261022215009 (Thu Oct 22 21:50:09 2026)
+; Publish: 20261022215009 (Thu Oct 22 21:50:09 2026)
+; Activate: 20261022215009 (Thu Oct 22 21:50:09 2026)
+com. IN DNSKEY 257 3 13 19ECirRYFXDo0xYtFfcGTz36uK4eiPntmcH53vY5V9aaJ5FKvCATbkZj CwMa8VvxORcQOCZ2ffB30GnhZiohtA==
