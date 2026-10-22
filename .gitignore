@@ -1,3 +1,20 @@
 
 # DNSSEC private keys — keep local, never commit
 **/*.private
+
+# Generated DNSSEC signing material
+**/zones/K*.key
+**/zones/*.signed
+**/zones/dsset-*
+**/client/root.key
+
+# Generated Phase 7 PKI material
+phase7/pki/*.key
+phase7/pki/*.crt
+
+# Locally compiled attacker binaries
+**/attacker/interceptor
+**/attacker/zonewalker
+
+# Generated report output
+report.pdf
