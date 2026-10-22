@@ -1,0 +1,53 @@
+$TTL 86400
+@   IN  SOA ns.com. hostmaster.com. (
+        2026102101
+        3600
+        1800
+        604800
+        86400
+)
+    IN  NS  ns.com.
+ns.com. IN  A   172.16.3.20
+
+example.com.       IN  NS  ns.example.com.
+ns.example.com.    IN  A   172.16.3.30
+example.com.		IN DS 2522 13 2 8B505D18BEFEF288B5F27B24A284E4D3EC582DC727CEDC4A491048A5 7E86B15D
+example.com.		IN DS 7924 13 2 6C057F0DA2C273ADE496AE4C40FAF12355EA56B234043EBEBBC8A617 BF135F69
+; This is a zone-signing key, keyid 37439, for com.
+; Created: 20261022163814 (Thu Oct 22 16:38:14 2026)
+; Publish: 20261022163814 (Thu Oct 22 16:38:14 2026)
+; Activate: 20261022163814 (Thu Oct 22 16:38:14 2026)
+; This is a key-signing key, keyid 21878, for com.
+; Created: 20261022163814 (Thu Oct 22 16:38:14 2026)
+; Publish: 20261022163814 (Thu Oct 22 16:38:14 2026)
+; Activate: 20261022163814 (Thu Oct 22 16:38:14 2026)
+example.com.		IN DS 7924 13 2 6C057F0DA2C273ADE496AE4C40FAF12355EA56B234043EBEBBC8A617 BF135F69
+example.com.		IN DS 15784 13 2 ECBB08560095D7C3D1CEA6AEC5729DFB9D56A7EA754322822892F454 1A6E1037
+; This is a zone-signing key, keyid 5285, for com.
+; Created: 20261022163849 (Thu Oct 22 16:38:49 2026)
+; Publish: 20261022163849 (Thu Oct 22 16:38:49 2026)
+; Activate: 20261022163849 (Thu Oct 22 16:38:49 2026)
+; This is a key-signing key, keyid 9094, for com.
+; Created: 20261022163849 (Thu Oct 22 16:38:49 2026)
+; Publish: 20261022163849 (Thu Oct 22 16:38:49 2026)
+; Activate: 20261022163849 (Thu Oct 22 16:38:49 2026)
+example.com.		IN DS 1283 13 2 0E2196B878B92100B5CCA2DF0944C4728FCEAF2A5DD66C008862315B 34C868B7
+; This is a zone-signing key, keyid 18474, for com.
+; Created: 20261022220749 (Thu Oct 22 22:07:49 2026)
+; Publish: 20261022220749 (Thu Oct 22 22:07:49 2026)
+; Activate: 20261022220749 (Thu Oct 22 22:07:49 2026)
+; This is a key-signing key, keyid 60693, for com.
+; Created: 20261022220749 (Thu Oct 22 22:07:49 2026)
+; Publish: 20261022220749 (Thu Oct 22 22:07:49 2026)
+; Activate: 20261022220749 (Thu Oct 22 22:07:49 2026)
+example.com.		IN DS 51635 13 2 76E8DC5AC5917F7479420309E034BDD052482988C099368260FD27FE DE1F8366
+; This is a zone-signing key, keyid 15650, for com.
+; Created: 20261022223016 (Thu Oct 22 22:30:16 2026)
+; Publish: 20261022223016 (Thu Oct 22 22:30:16 2026)
+; Activate: 20261022223016 (Thu Oct 22 22:30:16 2026)
+com. IN DNSKEY 256 3 13 gBsR+Kiln1vrq6cqtMy1DQgIx2CrJFvdUZJdZO3f4XXCePcRew+WGH9l izluef3Jk2GOq4Rnd8OZJ3NEMBBxTg==
+; This is a key-signing key, keyid 426, for com.
+; Created: 20261022223016 (Thu Oct 22 22:30:16 2026)
+; Publish: 20261022223016 (Thu Oct 22 22:30:16 2026)
+; Activate: 20261022223016 (Thu Oct 22 22:30:16 2026)
+com. IN DNSKEY 257 3 13 NEhY2IzPtbfvwqIkthgz/UGJDgOTJhf/PNBiT1A60rQMarVpDi6QYvCA yfh0eAUbngs6TxVY7I2fIusn0Jkrnw==

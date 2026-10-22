@@ -1,0 +1,37 @@
+=== PHASE 7: DNS OVER TLS - COMMAND LOG ===
+
+--- Certificate and encrypted resolution ---
+./scripts/sign-zones.sh
+./scripts/create-pki.sh
+docker compose build
+docker compose up -d
+./routers/configure-all-routes.sh
+./scripts/query-dot.sh
+
+Expected: TLS validation succeeds and example.com returns 172.16.1.20.
+
+--- Answer alteration ---
+./scripts/setup-diversion.sh
+./scripts/run-interceptor-forge.sh
+./scripts/query-dot.sh
+
+Expected: the Phase 6 UDP forger cannot alter the DoT response.
+
+--- Rogue certificate ---
+./scripts/test-rogue-certificate.sh
+Expected: the strict client rejects the TLS handshake; the fallback client
+then resolves only over cleartext; the script restores the genuine
+private-CA certificate.
+
+--- DoT denial and fallback ---
+./scripts/block-dot.sh
+./scripts/query-dot.sh
+./scripts/query-fallback.sh
+./scripts/unblock-dot.sh
+
+Expected: the strict client fails closed. A separately configured permissive
+client can fall back to cleartext DNS, which is intentionally unprotected.
+
+Observed during validation:
+  DoT: TLS1.3, status NOERROR, A 172.16.1.20
+  Blocked DoT: connection timeout and query failure
